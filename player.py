@@ -1,22 +1,25 @@
 import pygame
+from typing import Protocol, List
 from dataclasses import dataclass, field
 from colour import Colour
-from typing import List
 
 from pygame.locals import (
     K_UP,
     K_DOWN,
     K_LEFT,
     K_RIGHT,
-    KEYUP,
-    KEYDOWN
 )
+
+
+class GameObject(Protocol):
+    def draw(self, screen: pygame.Surface) -> None:
+        ...
 
 
 @dataclass
 class Missile:
-    x: int = 0
-    y: int = 0
+    x: int
+    y: int
     width: int = 10
     height: int = 10
     colour: tuple = Colour.YELLOW
@@ -42,8 +45,8 @@ class Missile:
 
 @dataclass
 class Player:
-    x: int = 0
-    y: int = 0
+    x: int
+    y: int
     width: int = 50
     height: int = 50
     colour: tuple = Colour.BLUE
@@ -94,8 +97,8 @@ class Player:
 
 @dataclass
 class Enemy:
-    x: int = 0
-    y: int = 0
+    x: int
+    y: int
     width: int = 50
     height: int = 50
     colour: tuple = Colour.RED
@@ -105,3 +108,48 @@ class Enemy:
 
     def draw(self, screen: pygame.Surface) -> None:
         pygame.draw.rect(screen, self.colour, (self.x, self.y, self.width, self.height))
+
+
+@dataclass
+class InfoBoard:
+    label: str
+    x: int
+    y: int
+    value: int = 0
+    font_family: str = "monospace"
+    font_size: int = 20
+    colour: tuple = Colour.YELLOW
+    _font: pygame.font.SysFont = field(init=False, default=None) 
+
+    def __post_init__(self):
+        self._font = pygame.font.SysFont(self.font_family, self.font_size)        
+
+    def draw(self, screen: pygame.Surface) -> None:
+        label = self._font.render(f"{self.label}: {self.value}", True, self.colour)
+        screen.blit(label, (self.x, self.y))
+
+
+@dataclass
+class Screen:
+    width: int = 800
+    height: int = 600
+    game_objects: List[GameObject] = field(default_factory=list)
+    surface: pygame.Surface = field(init=False, default=None)
+
+    def __post_init__(self):
+        self.surface = pygame.display.set_mode((self.width, self.height))
+
+    def add_objects(self, game_objects: List[GameObject]):
+        self.game_objects.extend(game_objects)
+
+    def add_object(self, game_object: GameObject):
+        self.game_objects.append(game_object)
+
+    def remove_object(self, game_object: GameObject):
+        self.game_objects.remove(game_object)
+
+    def draw(self) -> None:
+        self.surface.fill(Colour.BLACK)        
+        for game_object in self.game_objects:
+            game_object.draw(self.surface)
+        pygame.display.update()

@@ -1,14 +1,12 @@
 import pygame
 import random
-import time
-from player import Player, Enemy, Missile
+from player import Player, Enemy, Missile, InfoBoard, Screen
 from colour import Colour
 
 from pygame.locals import (
     K_SPACE,
 )
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+
 PLAYER_WIDTH = 50
 PLAYER_HEIGHT = 50
 ENEMY_WIDTH = 50
@@ -21,45 +19,47 @@ MAX_ENEMIES = 3
 ENEMIES = []
 
 
-def spawn_enemies():
+def spawn_enemies(screen: Screen):
     while len(ENEMIES) < MAX_ENEMIES:
-        enemy_x = random.randint(SCREEN_WIDTH // 2, SCREEN_WIDTH - ENEMY_WIDTH)
-        enemy_y = random.randint(0, SCREEN_HEIGHT - ENEMY_HEIGHT)
+        enemy_x = random.randint(screen.width // 2, screen.width - ENEMY_WIDTH)
+        enemy_y = random.randint(0, screen.height - ENEMY_HEIGHT)
         enemy_width = random.randint(ENEMY_WIDTH // 2, ENEMY_WIDTH)
         enemy_height = random.randint(ENEMY_HEIGHT // 2, ENEMY_HEIGHT)
         enemy_colour = random.choice((Colour.GREEN, Colour.PURPLE, Colour.CYAN, Colour.ORANGE, Colour.INDIGO))
         enemy = Enemy(enemy_x, enemy_y, enemy_width, enemy_height, enemy_colour)
         ENEMIES.append(enemy)
+        screen.add_object(enemy)
 
  
-def update_enemies():
+def update_enemies(screen: Screen):
     for enemy in ENEMIES:
         if random.random() < 0.1:
             enemy.x += random.randint(-ENEMY_WIDTH, ENEMY_HEIGHT)
             enemy.y += random.randint(-ENEMY_WIDTH, ENEMY_HEIGHT)
-            if -ENEMY_WIDTH < enemy.x < SCREEN_WIDTH and -ENEMY_HEIGHT < enemy.y < SCREEN_HEIGHT:
+            if -ENEMY_WIDTH < enemy.x < screen.width and -ENEMY_HEIGHT < enemy.y < screen.height:
                 continue
             ENEMIES.remove(enemy)
+            screen.remove_object(enemy)
 
 
 def play_game():
     pygame.init()
     running = True
-    score = 0
-    time_left = 1000
     missiles = []
 
+    screen = Screen()
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont("monospace", 25)
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    player = Player(0, SCREEN_HEIGHT // 2, PLAYER_WIDTH, PLAYER_HEIGHT)
+    player = Player(0, screen.height // 2, PLAYER_WIDTH, PLAYER_HEIGHT)
+    score_board = InfoBoard("Score", screen.width - 175, screen.height - 60)
+    timer_board = InfoBoard("Countdown", screen.width - 175, screen.height - 30, value=1000)
+    screen.add_objects([player, score_board, timer_board])
 
     while running:
         clock.tick(30)  # frames per sec
-        spawn_enemies()
-        update_enemies()
-        player.update(screen)
-        time_left -= 1
+        spawn_enemies(screen)
+        update_enemies(screen)
+        player.update(screen.surface)
+        timer_board.value -= 1
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -69,42 +69,31 @@ def play_game():
 
             pressed_keys = pygame.key.get_pressed()
             player.register_event(event.type, pressed_keys)
-            player.reset_if_out_of_bounds(screen)
+            player.reset_if_out_of_bounds(screen.surface)
 
             if event.type == pygame.KEYDOWN and pressed_keys[K_SPACE] and len(missiles) < 3:
                 missile = Missile(player.x + player.width, player.y + player.height // 2 - MISSILE_HEIGHT, MISSILE_WIDTH, MISSILE_HEIGHT)
                 missiles.append(missile)
+                screen.add_object(missile)
 
         for missile in missiles:
             missile.x += MISSILE_SPEED
-            if not missile.is_in_bounds(screen):
+            if not missile.is_in_bounds(screen.surface):
                 missiles.remove(missile)
+                screen.remove_object(missile)
                 continue
             for enemy in ENEMIES:
                 if missile.is_collision(enemy):
                     ENEMIES.remove(enemy)
+                    screen.remove_object(enemy)
                     missiles.remove(missile)
-                    score += 1
+                    screen.remove_object(missile)
+                    score_board.value += 1
 
-        screen.fill(Colour.BLACK)        
-        player.draw(screen)
-        for enemy in ENEMIES:
-            enemy.draw(screen)
-        for missile in missiles:         
-            missile.draw(screen)
+        screen.draw()
 
-        score_label = font.render(f"Score: {score}", True, Colour.YELLOW)
-        screen.blit(score_label, (SCREEN_WIDTH - 150, SCREEN_HEIGHT - 60))
-
-        time_label = font.render(f"Time: {time_left}", True, Colour.YELLOW)
-        screen.blit(time_label, (SCREEN_WIDTH - 150, SCREEN_HEIGHT - 30))
-
-        pygame.display.update()
-
-        if time_left < 0:
+        if timer_board.value < 0:
             running = False
-         
-    # pygame.time.wait(3000)
 
 
 if __name__ == "__main__":
