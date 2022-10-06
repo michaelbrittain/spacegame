@@ -5,12 +5,14 @@ from models import Player, Enemy, Missile
 from screen import InfoBoard
 from colour import Colour
 from models import GameObject
+from utils import load_sprite, load_sound
 
 
 class SpaceGame:
     def __init__(self, max_enemies: int = 3) -> None:
         self._init_pygame()
         self.max_enemies = max_enemies
+        self.background = load_sprite("background", False)
         self.player = Player(0, self.screen.get_height() // 2, fire_missile_callback=self._fire_missile)
         self.enemies = []
         self.missiles = []
@@ -23,6 +25,7 @@ class SpaceGame:
         self.timer_board = InfoBoard("Countdown", self.screen.get_width() - 175, self.screen.get_height() - 30, value=1000)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 64)
+        self.hit_sound = load_sound("hit")
 
     def play(self):
         while True:
@@ -51,6 +54,7 @@ class SpaceGame:
                 continue            
             for enemy in self.enemies[:]:
                 if missile.is_collision(enemy):
+                    self.hit_sound.play()
                     self.enemies.remove(enemy)
                     self.missiles.remove(missile)
                     self.score_board.value += 1                    
@@ -62,7 +66,8 @@ class SpaceGame:
             quit()
 
     def _draw(self):
-        self.screen.fill((Colour.BLACK))
+        # self.screen.fill((Colour.BLACK))
+        self.screen.blit(self.background, (0, 0))
         for game_object in self._game_objects:
             game_object.draw(self.screen)
         self.score_board.draw(self.screen)
@@ -91,3 +96,4 @@ class SpaceGame:
             # missile = Missile(game_object.x + game_object.width, game_object.y + game_object.height // 2 - Missile.height, Missile.width, Missile.height)
             missile = Missile(game_object.x + game_object.width, game_object.y + game_object.height // 2, 10, 10)
             self.missiles.append(missile)
+

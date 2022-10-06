@@ -1,8 +1,9 @@
 import pygame
 import random
-from typing import List, Callable
+from typing import Callable
 from dataclasses import dataclass
 from colour import Colour
+from utils import load_sprite, load_sound
 
 from pygame.locals import (
     K_UP,
@@ -23,9 +24,16 @@ class GameObject:
     move_x: int = 0
     move_y: int = 0
     move_speed: int = 0
+    sprite: pygame.Surface = None
 
     def draw(self, surface: pygame.Surface) -> None:
-        pygame.draw.rect(surface, self.colour, (self.x, self.y, self.width, self.height))
+        if self.sprite:
+            surface.blit(self.sprite, (self.x, self.y))
+            sprite_rect = self.sprite.get_rect()
+            self.width = sprite_rect.width
+            self.height = sprite_rect.height
+        else:
+            pygame.draw.rect(surface, self.colour, (self.x, self.y, self.width, self.height))
 
     def move(self, surface: pygame.Surface):
         self.x += self.move_x * self.move_speed
@@ -66,6 +74,11 @@ class Player(GameObject):
     colour: tuple = Colour.BLUE
     move_speed: int = 10
     fire_missile_callback: Callable = None
+    missile_sound: pygame.mixer.Sound = None
+
+    def __post_init__(self):
+        self.sprite = load_sprite("goat")
+        self.missile_sound = load_sound("laser")        
 
     def register_event(self, event_type: int = 0, pressed_keys: dict = None) -> None:
         if event_type == pygame.KEYUP:
@@ -86,6 +99,7 @@ class Player(GameObject):
                 self.move_x = 1
             if pressed_keys[K_SPACE]:
                 self.fire_missile_callback(self)
+                self.missile_sound.play()
 
 
 @dataclass
@@ -94,12 +108,13 @@ class Enemy(GameObject):
     height: int = 50
     colour: tuple = Colour.RED
 
-    def __post__init__(self):
-        self.x = random.randint(self.screen.width // 2, self.screen.width - self.width)
-        self.y = random.randint(0, self.screen.height - self.height)
-        self.width = random.randint(self.width // 2, self.width)
-        self.height = random.randint(self.height // 2, self.height)
-        self.colour = random.choice((Colour.GREEN, Colour.PURPLE, Colour.CYAN, Colour.ORANGE, Colour.INDIGO))
+    def __post_init__(self):
+        self.sprite = load_sprite("alien")
+        # self.x = random.randint(self.screen.width // 2, self.screen.width - self.width)
+        # self.y = random.randint(0, self.screen.height - self.height)
+        # self.width = random.randint(self.width // 2, self.width)
+        # self.height = random.randint(self.height // 2, self.height)
+        # self.colour = random.choice((Colour.GREEN, Colour.PURPLE, Colour.CYAN, Colour.ORANGE, Colour.INDIGO))
 
     def move(self, surface: pygame.Surface):
         if random.random() < 0.1:
