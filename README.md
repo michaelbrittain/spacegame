@@ -1,6 +1,6 @@
-# Space Game
+# Collection of games made with pygame
 
-A simple game to explore the features of pygame and understand how to arrange game elements and logic.
+A simple collection of games to explore the features of pygame and understand how to arrange game elements and logic.
 Currently work in progress.
 
 ## Installation
@@ -11,8 +11,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Runing the game
+## Runing the games
 
 ```
 python spacegame
+python cargame
 ```
