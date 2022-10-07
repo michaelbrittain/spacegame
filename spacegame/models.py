@@ -78,7 +78,7 @@ class Player(GameObject):
 
     def __post_init__(self):
         self.sprite = load_sprite("goat")
-        self.missile_sound = load_sound("laser")        
+        self.missile_sound = load_sound("spit", "mp3")        
 
     def register_event(self, event_type: int = 0, pressed_keys: dict = None) -> None:
         if event_type == pygame.KEYUP:
@@ -126,7 +126,7 @@ class Enemy(GameObject):
 @dataclass
 class Missile(GameObject):
     width: int = 10
-    height: int = 10
+    height: int = 5
     colour: tuple = Colour.YELLOW
     move_x: int = 1
     move_speed: int = 10      

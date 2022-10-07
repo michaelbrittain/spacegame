@@ -12,7 +12,7 @@ class SpaceGame:
     def __init__(self, max_enemies: int = 3) -> None:
         self._init_pygame()
         self.max_enemies = max_enemies
-        self.background = load_sprite("background", False)
+        self.background = load_sprite("background", "jpg", False)
         self.player = Player(0, self.screen.get_height() // 2, fire_missile_callback=self._fire_missile)
         self.enemies = []
         self.missiles = []
@@ -93,7 +93,6 @@ class SpaceGame:
 
     def _fire_missile(self, game_object: GameObject):
         if len(self.missiles) < 3:
-            # missile = Missile(game_object.x + game_object.width, game_object.y + game_object.height // 2 - Missile.height, Missile.width, Missile.height)
-            missile = Missile(game_object.x + game_object.width, game_object.y + game_object.height // 2, 10, 10)
+            missile = Missile(game_object.x + game_object.width, game_object.y + game_object.height // 2)
             self.missiles.append(missile)
 
